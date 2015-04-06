@@ -1,3 +1,4 @@
+import simplejson
 
 class BaseAPI(object):
     """
@@ -43,15 +44,42 @@ class BaseAPI(object):
                 # print "callable attribute %s" % attribute
                 method_name = attribute
                 if method_name.startswith('method_'):
+                    method = getattr(self, method_name)
+                    method__doc__ = getattr(method,'__doc__')
+                    formated_params_string = self._format_method_params(self._parse_method_docstring(method__doc__))
                     self._methods.update(
                         {
                             method_name.split('method_')[1]:
                                 {
                                     'runtime': getattr(self,method_name),
-                                    'describtion': getattr(getattr(self, method_name),'__doc__')
+                                    'describtion': "\n".join((formated_params_string,method__doc__))
                                 }
                         }
                     )
+
+    def _parse_method_docstring(self,docstring):
+        """
+        Parses method docstring of view:
+        <\n|param_name:param_type \n...|>
+        """
+        params = {}
+        try:
+            map(lambda x: params.update({x.split(':')[0].strip():x.split(':')[1].strip()}),filter(lambda x: x.replace(' ','')!= "",docstring.split('<|\n')[1].rsplit('|>\n')[0].split('\n')))
+            print "parmas %s" % params
+            return params
+        except:
+            return None
+
+    def _format_method_params(self,params):
+        try:
+            return ",".join(map(lambda x: "%s:%s"% (x,params[x]),params.keys()))
+        except AttributeError:
+            return ""
+
+    def get_method_params(self,method_name):
+        method = self.register_methods[method_name]
+        params = self._parse_method_docstring(method.__doc__)
+        return params
 
     def get_method(self,method_name):
         """
@@ -72,17 +100,27 @@ class BaseAPI(object):
         """
         return self.get_method(method_name)['runtime']
 
-    def call_method(self,method_name,kwargs):
+    def call_method(self,method_name,kwargs,result_form='internal'):
         """
         Calls method
         """
-        return self.get_result_of_method_call(method_name,kwargs)
+        result = self.get_result_of_method_call(method_name,kwargs)
+        if result_form == "internal":
+            return self.transform_internal(result)
+        else:
+            return self.trasnform_json(result)
 
     def get_result_of_method_call(self,method_name,kwargs):
         """
         Returns the result of called method
         """
         return self.get_method_runtime(method_name)(kwargs)
+
+    def transform_internal(self,data):
+        return data
+
+    def transform_json(self,data):
+        return simplejson.dumps(data)
 
     def method_dummy(self,kwargs):
         """
@@ -93,6 +131,11 @@ class BaseAPI(object):
     def method_second_dummy(self,kwargs):
         """
         Second dummy method
+        <|
+            param1: string
+            param2: string
+            param3: integer
+        |>
         """
         return kwargs
 

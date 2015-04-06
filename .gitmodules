@@ -1,0 +1,3 @@
+[submodule "services/service_drpc_gov_ua"]
+	path = services/service_drpc_gov_ua
+	url = git@github.com:kostyll/service_drpc_gov_ua.git

@@ -77,7 +77,7 @@ class BaseAPI(object):
             return ""
 
     def get_method_params(self,method_name):
-        method = self.register_methods[method_name]
+        method = self._methods[method_name]['runtime']
         params = self._parse_method_docstring(method.__doc__)
         return params
 
@@ -138,6 +138,21 @@ class BaseAPI(object):
         |>
         """
         return kwargs
+
+    def method_echo(self,kwargs):
+        """
+        Echo method that returns the same response
+        <|
+            message: string
+        |>
+        """
+        print "called echo"
+        try:
+            message =  kwargs['message']
+        except KeyError:
+            message = ""
+        print "Message is %s" % message
+        return message
 
     @classmethod
     def represent(some_class):

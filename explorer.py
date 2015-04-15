@@ -8,40 +8,12 @@ import json
 import urllib
 import urllib2
 
+import services.service
+from common import APIObject,APIMethodObject
+
 ###########################################################################
 # This module connects to external service-manager and explores it's API's
 ###########################################################################
-
-class APIMethodObject(object):
-    def __init__(self):
-        self.callback = lambda: None
-
-    def set_callback(self,func):
-        self.callback = func
-
-    def __call__(self,**kwargs):
-        return self.callback(**kwargs)
-
-class APIObject(object):
-    def __init__(self):
-        self._classes = set()
-        self.__dict__ = dict()
-
-    def __getattribute__(self,attr_name):
-        try:
-            return object.__getattribute__(self,attr_name)
-        except Exception,e:
-            return self.__getitem__(attr_name)
-
-    def __getitem__(self,item_name):
-        return  self.__dict__.__getitem__(item_name)
-
-    def __setitem__(self,item_name,value):
-        self.__dict__.__setitem__(item_name, value)
-
-    def setdefault(self,item_name,value):
-        self.__dict__.setdefault(item_name, value)
-
 
 class Explorer(object):
     def __init__(self,host,port=8080):
@@ -58,6 +30,8 @@ class Explorer(object):
                     api_method_object = APIMethodObject()
                     api_method_object.set_callback(self.decorate_call(service_name,class_,class_method))
                     self.services[service_name][class_].setdefault(class_method,api_method_object)
+
+
         # print self.services
 
     def make_request(self,path,params=None):
